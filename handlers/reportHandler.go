@@ -19,7 +19,7 @@ func NewReportHandler(db *gorm.DB) *ReportHandler {
 	return &ReportHandler{db: db}
 }
 
-func (h *ReportHandler) CreateReport(c echo.Context) error {
+func (h *ReportHandler) Create(c echo.Context) error {
 	var reportRequest models.ReportRequest
 	if err := c.Bind(&reportRequest); err != nil {
 		return err
@@ -46,4 +46,68 @@ func (h *ReportHandler) CreateReport(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, report)
+}
+
+func (h *ReportHandler) Get(c echo.Context) error {
+	id := c.Param("id")
+
+	var report models.Report
+	if err := h.db.Where("id = ?", id).First(&report).Error; err != nil {
+		return helper.NewError(http.StatusNotFound, "Report not found", err)
+	}
+
+	return c.JSON(http.StatusOK, report)
+}
+
+func (h *ReportHandler) List(c echo.Context) error {
+	var reports []models.Report
+	if err := h.db.Find(&reports).Error; err != nil {
+		return helper.NewError(http.StatusInternalServerError, "Failed to list reports", err)
+	}
+
+	return c.JSON(http.StatusOK, reports)
+}
+
+func (h *ReportHandler) Update(c echo.Context) error {
+	id := c.Param("id")
+
+	var report models.Report
+	if err := h.db.Where("id = ?", id).First(&report).Error; err != nil {
+		return helper.NewError(http.StatusNotFound, "Report not found", err)
+	}
+
+	var reportRequest models.ReportRequest
+	if err := c.Bind(&reportRequest); err != nil {
+		return err
+	}
+
+	if err := c.Validate(reportRequest); err != nil {
+		return err
+	}
+
+	report.Title = reportRequest.Title
+	report.Description = reportRequest.Description
+	report.Latitude = reportRequest.Latitude
+	report.Longitude = reportRequest.Longitude
+
+	if err := h.db.Save(&report).Error; err != nil {
+		return helper.NewError(http.StatusInternalServerError, "Failed to update report", err)
+	}
+
+	return c.JSON(http.StatusOK, report)
+}
+
+func (h *ReportHandler) Delete(c echo.Context) error {
+	id := c.Param("id")
+
+	var report models.Report
+	if err := h.db.Where("id = ?", id).First(&report).Error; err != nil {
+		return helper.NewError(http.StatusNotFound, "Report not found", err)
+	}
+
+	if err := h.db.Delete(&report).Error; err != nil {
+		return helper.NewError(http.StatusInternalServerError, "Failed to delete report", err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

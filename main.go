@@ -36,7 +36,7 @@ func main() {
 
 	reportHandler := handlers.NewReportHandler(db)
 
-	e.POST("/reports", reportHandler.CreateReport)
+	e.POST("/reports", reportHandler.Create)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
