@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"smart_urban_palanner_backend/handlers"
 	"smart_urban_palanner_backend/models"
 	"time"
@@ -49,6 +50,10 @@ func main() {
 	}
 	db.AutoMigrate(&models.Report{}, &models.User{})
 
+	if err := os.MkdirAll("static/images/", 0755); err != nil {
+		panic("failed to create images directory")
+	}
+
 	e := echo.New()
 	e.Validator = &CustomValidator{validator: validator.New()}
 	e.Use(logger.Logger())
@@ -56,6 +61,7 @@ func main() {
 	reportHandler := handlers.NewReportHandler(db)
 	authHandler := handlers.NewAuthHandler(db)
 
+	e.Static("/static", "static")
 	auth := e.Group("/auth")
 	auth.POST("/login", authHandler.Login)
 	auth.POST("/register", authHandler.Register)

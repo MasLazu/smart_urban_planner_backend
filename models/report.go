@@ -23,6 +23,7 @@ type Report struct {
 	AuthorID    string    `json:"author_id"`
 	Author      *User     `json:"author,omitempty" gorm:"foreignKey:author_id"`
 	Title       string    `json:"title"`
+	Image       string    `json:"image"`
 	Description string    `json:"description"`
 	Latitude    float64   `json:"latitude"`
 	Longitude   float64   `json:"longitude"`

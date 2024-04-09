@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"smart_urban_palanner_backend/helper"
 	"smart_urban_palanner_backend/models"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -21,9 +25,21 @@ func NewReportHandler(db *gorm.DB) *ReportHandler {
 }
 
 func (h *ReportHandler) Create(c echo.Context) error {
-	var reportRequest models.ReportRequest
-	if err := c.Bind(&reportRequest); err != nil {
-		return err
+	latitude, err := strconv.ParseFloat(c.FormValue("latitude"), 64)
+	if err != nil {
+		return helper.NewError(http.StatusBadRequest, "Invalid request body", err)
+	}
+
+	longitude, err := strconv.ParseFloat(c.FormValue("longitude"), 64)
+	if err != nil {
+		return helper.NewError(http.StatusBadRequest, "Invalid request body", err)
+	}
+
+	reportRequest := models.ReportRequest{
+		Title:       c.FormValue("title"),
+		Description: c.FormValue("description"),
+		Latitude:    latitude,
+		Longitude:   longitude,
 	}
 
 	if err := c.Validate(reportRequest); err != nil {
@@ -32,13 +48,46 @@ func (h *ReportHandler) Create(c echo.Context) error {
 
 	user := c.Get("user").(jwt.RegisteredClaims)
 
+	image, err := c.FormFile("image")
+	if err != nil {
+		log.Println(err)
+		return helper.NewError(http.StatusBadRequest, "Invalid request body", err)
+	}
+	src, err := image.Open()
+	if err != nil {
+		log.Println(err)
+		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
+	}
+	defer src.Close()
+
 	id, err := uuid.NewV7()
+	if err != nil {
+		log.Println(err)
+		log.Println(err)
+		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
+	}
+	image.Filename = id.String() + ".jpg"
+
+	dst, err := os.Create("static/images/" + image.Filename)
+	if err != nil {
+		log.Println(err)
+		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		log.Println(err)
+		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
+	}
+
+	id, err = uuid.NewV7()
 	if err != nil {
 		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
 	}
 
 	report := reportRequest.ToReport()
 	report.ID = id.String()
+	report.Image = "/static/images/" + image.Filename
 	report.Popularity = 0
 	report.CreatedAt = time.Now()
 	report.AuthorID = user.Subject
