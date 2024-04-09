@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"smart_urban_palanner_backend/handlers"
 	"smart_urban_palanner_backend/models"
+	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	logger "github.com/labstack/echo/v4/middleware"
@@ -27,6 +29,16 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 func authMiddleware() echo.MiddlewareFunc {
 	return echojwt.WithConfig(echojwt.Config{
 		SigningKey: []byte("secret"),
+		SuccessHandler: func(c echo.Context) {
+			user := c.Get("user").(*jwt.Token)
+			claims := user.Claims.(jwt.MapClaims)
+			exp := int64(claims["exp"].(float64))
+
+			c.Set("user", jwt.RegisteredClaims{
+				Subject:   claims["sub"].(string),
+				ExpiresAt: jwt.NewNumericDate(time.Unix(exp, 0)),
+			})
+		},
 	})
 }
 
@@ -46,6 +58,7 @@ func main() {
 
 	auth := e.Group("/auth")
 	auth.POST("/login", authHandler.Login)
+	auth.POST("/register", authHandler.Register)
 
 	report := e.Group("/reports")
 	report.GET("/:id", reportHandler.Get)

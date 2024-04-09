@@ -6,6 +6,7 @@ import (
 	"smart_urban_palanner_backend/models"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -29,6 +30,8 @@ func (h *ReportHandler) Create(c echo.Context) error {
 		return err
 	}
 
+	user := c.Get("user").(jwt.RegisteredClaims)
+
 	id, err := uuid.NewV7()
 	if err != nil {
 		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
@@ -38,7 +41,7 @@ func (h *ReportHandler) Create(c echo.Context) error {
 	report.ID = id.String()
 	report.Popularity = 0
 	report.CreatedAt = time.Now()
-	report.AuthorID = "d1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b"
+	report.AuthorID = user.Subject
 
 	if err := h.db.Create(&report).Error; err != nil {
 		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
@@ -75,6 +78,11 @@ func (h *ReportHandler) Update(c echo.Context) error {
 		return helper.NewError(http.StatusNotFound, "Report not found", err)
 	}
 
+	user := c.Get("user").(jwt.RegisteredClaims)
+	if report.AuthorID != user.Subject {
+		return helper.NewError(http.StatusUnauthorized, "Unauthorized", nil)
+	}
+
 	var reportRequest models.ReportRequest
 	if err := c.Bind(&reportRequest); err != nil {
 		return err
@@ -102,6 +110,11 @@ func (h *ReportHandler) Delete(c echo.Context) error {
 	var report models.Report
 	if err := h.db.Where("id = ?", id).First(&report).Error; err != nil {
 		return helper.NewError(http.StatusNotFound, "Report not found", err)
+	}
+
+	user := c.Get("user").(jwt.RegisteredClaims)
+	if report.AuthorID != user.Subject {
+		return helper.NewError(http.StatusUnauthorized, "Unauthorized", nil)
 	}
 
 	if err := h.db.Delete(&report).Error; err != nil {

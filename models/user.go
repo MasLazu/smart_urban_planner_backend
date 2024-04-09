@@ -1,14 +1,26 @@
 package models
 
-type UserRequest struct {
+type UserRegister struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
-func (u *UserRequest) ToUser() *User {
+func (u *UserRegister) ToUser() *User {
 	return &User{
 		Name:     u.Name,
+		Email:    u.Email,
+		Password: u.Password,
+	}
+}
+
+type UserLogin struct {
+	Email    string `json:"email" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+func (u *UserLogin) ToUser() *User {
+	return &User{
 		Email:    u.Email,
 		Password: u.Password,
 	}
