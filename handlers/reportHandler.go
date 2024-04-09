@@ -39,7 +39,6 @@ func (h *ReportHandler) Create(c echo.Context) error {
 	report.Popularity = 0
 	report.CreatedAt = time.Now()
 	report.AuthorID = "d1b1b1b1-1b1b-1b1b-1b1b-1b1b1b1b1b1b"
-	// report.AuthorID = c.Get("user").(models.User).ID
 
 	if err := h.db.Create(&report).Error; err != nil {
 		return helper.NewError(http.StatusInternalServerError, "Failed to create report", err)
