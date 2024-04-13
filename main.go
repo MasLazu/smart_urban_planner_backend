@@ -65,6 +65,7 @@ func main() {
 	auth := e.Group("/auth")
 	auth.POST("/login", authHandler.Login)
 	auth.POST("/register", authHandler.Register)
+	auth.GET("/me", authHandler.Me, authMiddleware())
 
 	report := e.Group("/reports")
 	report.GET("/:id", reportHandler.Get)

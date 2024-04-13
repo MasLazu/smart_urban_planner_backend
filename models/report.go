@@ -5,6 +5,7 @@ import "time"
 type ReportRequest struct {
 	Title       string  `json:"title" validate:"required"`
 	Description string  `json:"description" validate:"required"`
+	Address     string  `json:"address" validate:"required"`
 	Latitude    float64 `json:"latitude" validate:"required"`
 	Longitude   float64 `json:"longitude" validate:"required"`
 }
@@ -14,6 +15,7 @@ func (r *ReportRequest) ToReport() *Report {
 		Title:       r.Title,
 		Description: r.Description,
 		Latitude:    r.Latitude,
+		Address:     r.Address,
 		Longitude:   r.Longitude,
 	}
 }
@@ -23,6 +25,7 @@ type Report struct {
 	AuthorID    string    `json:"author_id"`
 	Author      *User     `json:"author,omitempty" gorm:"foreignKey:author_id"`
 	Title       string    `json:"title"`
+	Address     string    `json:"address"`
 	Image       string    `json:"image"`
 	Description string    `json:"description"`
 	Latitude    float64   `json:"latitude"`

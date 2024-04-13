@@ -89,3 +89,14 @@ func (h *AuthHandler) Register(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, user)
 }
+
+func (h *AuthHandler) Me(c echo.Context) error {
+	user := c.Get("user").(jwt.RegisteredClaims)
+
+	var userModel models.User
+	if err := h.db.Where("id = ?", user.Subject).First(&userModel).Error; err != nil {
+		return helper.NewError(http.StatusNotFound, "User not found", err)
+	}
+
+	return c.JSON(http.StatusOK, userModel)
+}

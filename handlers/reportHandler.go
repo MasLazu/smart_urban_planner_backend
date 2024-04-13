@@ -38,6 +38,7 @@ func (h *ReportHandler) Create(c echo.Context) error {
 	reportRequest := models.ReportRequest{
 		Title:       c.FormValue("title"),
 		Description: c.FormValue("description"),
+		Address:     c.FormValue("address"),
 		Latitude:    latitude,
 		Longitude:   longitude,
 	}
